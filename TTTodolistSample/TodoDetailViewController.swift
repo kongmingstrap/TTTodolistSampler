@@ -1,15 +1,14 @@
 //
-//  DetailViewController.swift
+//  TodoDetailViewController.swift
 //  TTTodolistSample
 //
 
 import UIKit
 
-class DetailViewController: UIViewController {
+class TodoDetailViewController: UIViewController {
 
     @IBOutlet weak var detailDescriptionLabel: UILabel!
-
-
+    
     var detailItem: AnyObject? {
         didSet {
             // Update the view.
@@ -36,7 +35,4 @@ class DetailViewController: UIViewController {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
-
-
 }
-

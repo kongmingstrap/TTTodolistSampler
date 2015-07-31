@@ -1,30 +1,26 @@
 //
-//  TrelloAPI.swift
+//  TodoSampleAPI.swift
 //  TTTodolistSample
-//
-//  Created by Takaaki Tanaka on 2015/07/30.
-//  Copyright © 2015年 Takaaki Tanaka. All rights reserved.
 //
 
 import Foundation
 import APIKit
 
-protocol TrelloRequest: Request {
+protocol TodoSampleRequest: Request {
     
 }
 
-extension TrelloRequest {
+extension TodoSampleRequest {
     var baseURL: NSURL {
         return NSURL(string: "http://localhost:9000")!
+        //return NSURL(string: "http://enigmatic-dusk-9369.herokuapp.com")!
     }
 }
 
-class TrelloAPI: API {
+class TodoSampleAPI: API {
     
-    
-    
-    struct GetToken: TrelloRequest {
-        typealias Response = Token
+    struct GetTodos: TodoSampleRequest {
+        typealias Response = Todos<[String: AnyObject]>
         
         var method: HTTPMethod {
             return .GET
@@ -34,32 +30,33 @@ class TrelloAPI: API {
             return "/todos"
         }
         
-        var parameters: [String: AnyObject] {
-            return ["key": "1f5ad85ac2d35d8282c7464ba40bf759", "name": "TakaakiTanaka+TodolistSample", "expiration": "1day", "response_type": "token", "scope": "read,write"]
-        }
-        
         func responseFromObject(object: AnyObject, URLResponse: NSHTTPURLResponse) -> Response? {
-            guard let dictionary = object as? [String: AnyObject] else {
+            guard let dictionaries = object as? [[String: AnyObject]] else {
                 return nil
             }
-            
-            guard let rateLimit = RateLimit(dictionary: dictionary) else {
-                return nil
-            }
-            
-            return rateLimit
+            return Todos(todos: dictionaries)
         }
     }
     
-    struct GetRateLimit: TrelloRequest {
-        typealias Response = RateLimit
+    struct PostTodo: TodoSampleRequest {
+        typealias Response = Todo
+        
+        var content: String
+        
+        init(content: String) {
+            self.content = content
+        }
         
         var method: HTTPMethod {
-            return .GET
+            return .POST
         }
         
         var path: String {
-            return "/rate_limit"
+            return "/todos"
+        }
+        
+        var parameters: [String: AnyObject] {
+            return ["content": self.content]
         }
         
         func responseFromObject(object: AnyObject, URLResponse: NSHTTPURLResponse) -> Response? {
@@ -67,48 +64,96 @@ class TrelloAPI: API {
                 return nil
             }
             
-            guard let rateLimit = RateLimit(dictionary: dictionary) else {
+            guard let todo = Todo(dictionary: dictionary) else {
                 return nil
             }
             
-            return rateLimit
+            return todo
+        }
+    }
+
+    struct UpdateTodo: TodoSampleRequest {
+        typealias Response = Todo
+        
+        var id = 8
+        
+        var method: HTTPMethod {
+            return .PUT
+        }
+        
+        var path: String {
+            return "/todos/5"
+        }
+        
+        var parameters: [String: AnyObject] {
+            return ["id": 5, "content": "TEST 0002"]
+        }
+        
+        func responseFromObject(object: AnyObject, URLResponse: NSHTTPURLResponse) -> Response? {
+            guard let dictionary = object as? [String: AnyObject] else {
+                return nil
+            }
+            
+            guard let todo = Todo(dictionary: dictionary) else {
+                return nil
+            }
+            return todo
+        }
+    }
+    
+    struct DeleteTodo: TodoSampleRequest {
+        typealias Response = Todo
+        
+        var id = 8
+        
+        var method: HTTPMethod {
+            return .DELETE
+        }
+        
+        var path: String {
+            return "/todos/8"
+        }
+        
+        var parameters: [String: AnyObject] {
+            return ["id": 8, "content": "TEST 005"]
+        }
+        
+        func responseFromObject(object: AnyObject, URLResponse: NSHTTPURLResponse) -> Response? {
+            guard let dictionary = object as? [String: AnyObject] else {
+                return nil
+            }
+            
+            guard let todo = Todo(dictionary: dictionary) else {
+                return nil
+            }
+            return todo
         }
     }
 }
 
-struct RateLimit {
-    let count: Int
-    let resetDate: NSDate
+struct Todo {
+    let id: Int
+    let content: String
     
     init?(dictionary: [String: AnyObject]) {
-        guard let count = dictionary["rate"]?["limit"] as? Int else {
+        guard let id = dictionary["id"] as? Int else {
             return nil
         }
         
-        guard let resetDateString = dictionary["rate"]?["reset"] as? NSTimeInterval else {
+        guard let content = dictionary["content"] as? String else {
             return nil
         }
         
-        self.count = count
-        self.resetDate = NSDate(timeIntervalSince1970: resetDateString)
+        self.id = id
+        self.content = content
     }
 }
 
 
-struct Token {
-    let count: Int
-    let resetDate: NSDate
+struct Todos<T> {
+    var todos: Array<T>
     
-    init?(dictionary: [String: AnyObject]) {
-        guard let count = dictionary["rate"]?["limit"] as? Int else {
-            return nil
-        }
-        
-        guard let resetDateString = dictionary["rate"]?["reset"] as? NSTimeInterval else {
-            return nil
-        }
-        
-        self.count = count
-        self.resetDate = NSDate(timeIntervalSince1970: resetDateString)
+    init(todos: Array<T>) {
+        self.todos = todos
     }
 }

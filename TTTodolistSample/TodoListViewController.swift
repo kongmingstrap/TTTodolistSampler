@@ -8,7 +8,8 @@ import CoreData
 
 class TodoListViewController: UITableViewController, NSFetchedResultsControllerDelegate {
 
-    var detailViewController: DetailViewController? = nil
+    var detailViewController: TodoDetailViewController? = nil
+    var editViewController: TodoEditViewController? = nil
     var managedObjectContext: NSManagedObjectContext? = nil
 
     override func viewDidLoad() {
@@ -18,7 +19,7 @@ class TodoListViewController: UITableViewController, NSFetchedResultsControllerD
         self.navigationItem.rightBarButtonItem = addButton
         if let split = self.splitViewController {
             let controllers = split.viewControllers
-            self.detailViewController = (controllers[controllers.count - 1] as! UINavigationController).topViewController as? DetailViewController
+            self.detailViewController = (controllers[controllers.count - 1] as! UINavigationController).topViewController as? TodoDetailViewController
         }
         self.refreshControl = UIRefreshControl()
         self.refreshControl!.addTarget(self, action: "refresh", forControlEvents: UIControlEvents.ValueChanged)
@@ -73,28 +74,7 @@ class TodoListViewController: UITableViewController, NSFetchedResultsControllerD
     }
     
     func insertNewObject(sender: AnyObject) {
-        let request = TodoSampleAPI.PostTodo()
-        TodoSampleAPI.sendRequest(request) { result in
-            switch result {
-            case .Success(let todo):
-                
-                print("todos: \(todo)")
-                
-                let context = self.fetchedResultsController.managedObjectContext
-                let entity = self.fetchedResultsController.fetchRequest.entity!
-                let newManagedObject = NSEntityDescription.insertNewObjectForEntityForName(entity.name!, inManagedObjectContext: context)
-                newManagedObject.setValue(todo.id, forKey: "id")
-                newManagedObject.setValue(todo.content, forKey: "content")
-                
-                do {
-                    try context.save()
-                } catch {
-                    abort()
-                }
-            case .Failure(let error):
-                print("error: \(error)")
-            }
-        }
+        self.performSegueWithIdentifier("showEdit", sender: nil)
     }
 
     // MARK: - Segues
@@ -103,11 +83,34 @@ class TodoListViewController: UITableViewController, NSFetchedResultsControllerD
         if segue.identifier == "showDetail" {
             if let indexPath = self.tableView.indexPathForSelectedRow {
             let object = self.fetchedResultsController.objectAtIndexPath(indexPath)
-                let controller = (segue.destinationViewController as! UINavigationController).topViewController as! DetailViewController
+                let controller = (segue.destinationViewController as! UINavigationController).topViewController as! TodoDetailViewController
                 controller.detailItem = object
                 controller.navigationItem.leftBarButtonItem = self.splitViewController?.displayModeButtonItem()
                 controller.navigationItem.leftItemsSupplementBackButton = true
             }
+        } else if segue.identifier == "showEdit" {
+            let controller = (segue.destinationViewController as! UINavigationController).topViewController as! TodoEditViewController
+            controller.doneTextClosure = ({(text: String) -> Void in
+                print("todos: \(text)")
+                let request = TodoSampleAPI.PostTodo(content: text)
+                TodoSampleAPI.sendRequest(request) { result in
+                    switch result {
+                    case .Success(let todo):
+                        let context = self.fetchedResultsController.managedObjectContext
+                        let entity = self.fetchedResultsController.fetchRequest.entity!
+                        let newManagedObject = NSEntityDescription.insertNewObjectForEntityForName(entity.name!, inManagedObjectContext: context)
+                        newManagedObject.setValue(todo.id, forKey: "id")
+                        newManagedObject.setValue(todo.content, forKey: "content")
+                        do {
+                            try context.save()
+                        } catch {
+                            abort()
+                        }
+                    case .Failure(let error):
+                        print("error: \(error)")
+                    }
+                }
+            })
         }
     }
 
@@ -162,7 +165,7 @@ class TodoListViewController: UITableViewController, NSFetchedResultsControllerD
         fetchRequest.fetchBatchSize = 20
         let sortDescriptor = NSSortDescriptor(key: "id", ascending: true)
         fetchRequest.sortDescriptors = [sortDescriptor]
-        let aFetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: self.managedObjectContext!, sectionNameKeyPath: nil, cacheName: "Master")
+        let aFetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: self.managedObjectContext!, sectionNameKeyPath: nil, cacheName: "TodoList")
         aFetchedResultsController.delegate = self
         _fetchedResultsController = aFetchedResultsController
         do {

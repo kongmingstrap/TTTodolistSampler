@@ -1,0 +1,23 @@
+PODS:
+  - APIKit (1.0.0-beta1):
+    - Result (~> 0.6-beta.1)
+  - Result (0.6-beta.1)
+
+DEPENDENCIES:
+  - APIKit (from `https://github.com/ishkawa/APIKit.git`, branch `master`)
+
+EXTERNAL SOURCES:
+  APIKit:
+    :branch: master
+    :git: https://github.com/ishkawa/APIKit.git
+
+CHECKOUT OPTIONS:
+  APIKit:
+    :commit: 5cfd2e6deca826ffa0ed86168c29d597ffe20d8e
+    :git: https://github.com/ishkawa/APIKit.git
+
+SPEC CHECKSUMS:
+  APIKit: cb0ce7ebc5e72d7ae4d71e0061f2f98676287c1f
+  Result: 6c990ec4a72470672f9fc5b6fef009da0f6f40d1
+
+COCOAPODS: 0.38.2

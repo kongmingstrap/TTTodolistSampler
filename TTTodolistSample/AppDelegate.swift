@@ -2,9 +2,6 @@
 //  AppDelegate.swift
 //  TTTodolistSample
 //
-//  Created by Takaaki Tanaka on 2015/07/30.
-//  Copyright © 2015年 Takaaki Tanaka. All rights reserved.
-//
 
 import UIKit
 import CoreData
@@ -23,7 +20,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         splitViewController.delegate = self
 
         let masterNavigationController = splitViewController.viewControllers[0] as! UINavigationController
-        let controller = masterNavigationController.topViewController as! MasterViewController
+        let controller = masterNavigationController.topViewController as! TodoListViewController
         controller.managedObjectContext = self.managedObjectContext
         return true
     }
@@ -56,7 +53,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
     func splitViewController(splitViewController: UISplitViewController, collapseSecondaryViewController secondaryViewController:UIViewController, ontoPrimaryViewController primaryViewController:UIViewController) -> Bool {
         guard let secondaryAsNavController = secondaryViewController as? UINavigationController else { return false }
-        guard let topAsDetailController = secondaryAsNavController.topViewController as? DetailViewController else { return false }
+        guard let topAsDetailController = secondaryAsNavController.topViewController as? TodoDetailViewController else { return false }
         if topAsDetailController.detailItem == nil {
             // Return true to indicate that we have handled the collapse by doing nothing; the secondary controller will be discarded.
             return true
