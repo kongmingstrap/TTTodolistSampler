@@ -2,9 +2,6 @@
 //  DetailViewController.swift
 //  TTTodolistSample
 //
-//  Created by Takaaki Tanaka on 2015/07/30.
-//  Copyright © 2015年 Takaaki Tanaka. All rights reserved.
-//
 
 import UIKit
 
@@ -24,7 +21,7 @@ class DetailViewController: UIViewController {
         // Update the user interface for the detail item.
         if let detail = self.detailItem {
             if let label = self.detailDescriptionLabel {
-                label.text = detail.valueForKey("timeStamp")!.description
+                label.text = detail.valueForKey("content")!.description
             }
         }
     }

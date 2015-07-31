@@ -1,31 +1,27 @@
 //
-//  MasterViewController.swift
+//  TodoListViewController.swift
 //  TTTodolistSample
-//
-//  Created by Takaaki Tanaka on 2015/07/30.
-//  Copyright © 2015年 Takaaki Tanaka. All rights reserved.
 //
 
 import UIKit
 import CoreData
 
-class MasterViewController: UITableViewController, NSFetchedResultsControllerDelegate {
+class TodoListViewController: UITableViewController, NSFetchedResultsControllerDelegate {
 
     var detailViewController: DetailViewController? = nil
     var managedObjectContext: NSManagedObjectContext? = nil
 
-
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
         self.navigationItem.leftBarButtonItem = self.editButtonItem()
-
         let addButton = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: "insertNewObject:")
         self.navigationItem.rightBarButtonItem = addButton
         if let split = self.splitViewController {
             let controllers = split.viewControllers
-            self.detailViewController = (controllers[controllers.count-1] as! UINavigationController).topViewController as? DetailViewController
+            self.detailViewController = (controllers[controllers.count - 1] as! UINavigationController).topViewController as? DetailViewController
         }
+        self.refreshControl = UIRefreshControl()
+        self.refreshControl!.addTarget(self, action: "refresh", forControlEvents: UIControlEvents.ValueChanged)
     }
 
     override func viewWillAppear(animated: Bool) {
@@ -38,23 +34,66 @@ class MasterViewController: UITableViewController, NSFetchedResultsControllerDel
         // Dispose of any resources that can be recreated.
     }
 
+    func refresh() {
+        let request = TodoSampleAPI.GetTodos()
+        TodoSampleAPI.sendRequest(request) { result in
+            switch result {
+            case .Success(let todos):
+                let context = self.fetchedResultsController.managedObjectContext
+                let entity = self.fetchedResultsController.fetchRequest.entity!
+                for todo in todos.todos {
+                    let id = todo["id"]
+                    let content = todo["content"]
+                    let fetchRequest = NSFetchRequest()
+                    fetchRequest.entity = entity
+                    let format = "id == \(id!)"
+                    let predicate = NSPredicate(format: format, argumentArray: nil)
+                    fetchRequest.predicate = predicate
+                    do {
+                        let fetchObjects = try context.executeFetchRequest(fetchRequest)
+                        if fetchObjects.count > 0 {
+                            let managedObject = fetchObjects[0] as! NSManagedObject
+                            managedObject.setValue(id, forKey: "id")
+                            managedObject.setValue(content, forKey: "content")
+                        } else {
+                            let managedObject = NSEntityDescription.insertNewObjectForEntityForName(entity.name!, inManagedObjectContext: context)
+                            managedObject.setValue(id, forKey: "id")
+                            managedObject.setValue(content, forKey: "content")
+                        }
+                        try context.save()
+                    } catch {
+                        abort()
+                    }
+                }
+            case .Failure(let error):
+                print("error: \(error)")
+            }
+            self.refreshControl!.endRefreshing()
+        }
+    }
+    
     func insertNewObject(sender: AnyObject) {
-        let context = self.fetchedResultsController.managedObjectContext
-        let entity = self.fetchedResultsController.fetchRequest.entity!
-        let newManagedObject = NSEntityDescription.insertNewObjectForEntityForName(entity.name!, inManagedObjectContext: context)
-             
-        // If appropriate, configure the new managed object.
-        // Normally you should use accessor methods, but using KVC here avoids the need to add a custom class to the template.
-        newManagedObject.setValue(NSDate(), forKey: "timeStamp")
-             
-        // Save the context.
-        do {
-            try context.save()
-        } catch {
-            // Replace this implementation with code to handle the error appropriately.
-            // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-            //print("Unresolved error \(error), \(error.userInfo)")
-            abort()
+        let request = TodoSampleAPI.PostTodo()
+        TodoSampleAPI.sendRequest(request) { result in
+            switch result {
+            case .Success(let todo):
+                
+                print("todos: \(todo)")
+                
+                let context = self.fetchedResultsController.managedObjectContext
+                let entity = self.fetchedResultsController.fetchRequest.entity!
+                let newManagedObject = NSEntityDescription.insertNewObjectForEntityForName(entity.name!, inManagedObjectContext: context)
+                newManagedObject.setValue(todo.id, forKey: "id")
+                newManagedObject.setValue(todo.content, forKey: "content")
+                
+                do {
+                    try context.save()
+                } catch {
+                    abort()
+                }
+            case .Failure(let error):
+                print("error: \(error)")
+            }
         }
     }
 
@@ -98,13 +137,9 @@ class MasterViewController: UITableViewController, NSFetchedResultsControllerDel
         if editingStyle == .Delete {
             let context = self.fetchedResultsController.managedObjectContext
             context.deleteObject(self.fetchedResultsController.objectAtIndexPath(indexPath))
-                
             do {
                 try context.save()
             } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                //print("Unresolved error \(error), \(error.userInfo)")
                 abort()
             }
         }
@@ -112,7 +147,7 @@ class MasterViewController: UITableViewController, NSFetchedResultsControllerDel
 
     func configureCell(cell: UITableViewCell, atIndexPath indexPath: NSIndexPath) {
         let object = self.fetchedResultsController.objectAtIndexPath(indexPath)
-        cell.textLabel!.text = object.valueForKey("timeStamp")!.description
+        cell.textLabel!.text = object.valueForKey("content")!.description
     }
 
     // MARK: - Fetched results controller
@@ -121,43 +156,29 @@ class MasterViewController: UITableViewController, NSFetchedResultsControllerDel
         if _fetchedResultsController != nil {
             return _fetchedResultsController!
         }
-        
         let fetchRequest = NSFetchRequest()
-        // Edit the entity name as appropriate.
-        let entity = NSEntityDescription.entityForName("Event", inManagedObjectContext: self.managedObjectContext!)
+        let entity = NSEntityDescription.entityForName("Todo", inManagedObjectContext: self.managedObjectContext!)
         fetchRequest.entity = entity
-        
-        // Set the batch size to a suitable number.
         fetchRequest.fetchBatchSize = 20
-        
-        // Edit the sort key as appropriate.
-        let sortDescriptor = NSSortDescriptor(key: "timeStamp", ascending: false)
-        
+        let sortDescriptor = NSSortDescriptor(key: "id", ascending: true)
         fetchRequest.sortDescriptors = [sortDescriptor]
-        
-        // Edit the section name key path and cache name if appropriate.
-        // nil for section name key path means "no sections".
         let aFetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: self.managedObjectContext!, sectionNameKeyPath: nil, cacheName: "Master")
         aFetchedResultsController.delegate = self
         _fetchedResultsController = aFetchedResultsController
-        
         do {
             try _fetchedResultsController!.performFetch()
         } catch {
-             // Replace this implementation with code to handle the error appropriately.
-             // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development. 
-             //print("Unresolved error \(error), \(error.userInfo)")
              abort()
         }
-        
         return _fetchedResultsController!
-    }    
+    }
+    
     var _fetchedResultsController: NSFetchedResultsController? = nil
-
+    
     func controllerWillChangeContent(controller: NSFetchedResultsController) {
         self.tableView.beginUpdates()
     }
-
+    
     func controller(controller: NSFetchedResultsController, didChangeSection sectionInfo: NSFetchedResultsSectionInfo, atIndex sectionIndex: Int, forChangeType type: NSFetchedResultsChangeType) {
         switch type {
             case .Insert:
@@ -168,7 +189,7 @@ class MasterViewController: UITableViewController, NSFetchedResultsControllerDel
                 return
         }
     }
-
+    
     func controller(controller: NSFetchedResultsController, didChangeObject anObject: NSManagedObject, atIndexPath indexPath: NSIndexPath?, forChangeType type: NSFetchedResultsChangeType, newIndexPath: NSIndexPath?) {
         switch type {
             case .Insert:
@@ -186,15 +207,5 @@ class MasterViewController: UITableViewController, NSFetchedResultsControllerDel
     func controllerDidChangeContent(controller: NSFetchedResultsController) {
         self.tableView.endUpdates()
     }
-
-    /*
-     // Implementing the above methods to update the table view in response to individual changes may have performance implications if a large number of changes are made simultaneously. If this proves to be an issue, you can instead just implement controllerDidChangeContent: which notifies the delegate that all section and object changes have been processed.
-     
-     func controllerDidChangeContent(controller: NSFetchedResultsController) {
-         // In the simplest, most efficient, case, reload the table view.
-         self.tableView.reloadData()
-     }
-     */
-
 }
 
