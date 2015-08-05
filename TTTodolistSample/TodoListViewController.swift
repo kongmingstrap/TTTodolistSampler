@@ -14,7 +14,6 @@ class TodoListViewController: UITableViewController, NSFetchedResultsControllerD
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.navigationItem.leftBarButtonItem = self.editButtonItem()
         let addButton = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: "insertNewObject:")
         self.navigationItem.rightBarButtonItem = addButton
         if let split = self.splitViewController {
@@ -43,11 +42,11 @@ class TodoListViewController: UITableViewController, NSFetchedResultsControllerD
                 let context = self.fetchedResultsController.managedObjectContext
                 let entity = self.fetchedResultsController.fetchRequest.entity!
                 for todo in todos.todos {
-                    let id = todo["id"]
-                    let content = todo["content"]
+                    let id = todo.id
+                    let content = todo.content
                     let fetchRequest = NSFetchRequest()
                     fetchRequest.entity = entity
-                    let format = "id == \(id!)"
+                    let format = "id == \(id)"
                     let predicate = NSPredicate(format: format, argumentArray: nil)
                     fetchRequest.predicate = predicate
                     do {
@@ -61,13 +60,26 @@ class TodoListViewController: UITableViewController, NSFetchedResultsControllerD
                             managedObject.setValue(id, forKey: "id")
                             managedObject.setValue(content, forKey: "content")
                         }
+                    } catch {
+                        abort()
+                    }
+                }
+                if context.hasChanges {
+                    do {
                         try context.save()
                     } catch {
                         abort()
                     }
                 }
             case .Failure(let error):
-                print("error: \(error)")
+                let errorMessage = "error: \(error)"
+                print(errorMessage)
+                let alertController = UIAlertController(title: nil, message: errorMessage, preferredStyle: UIAlertControllerStyle.Alert)
+                let doneAction = UIAlertAction(title: "OK", style: UIAlertActionStyle.Cancel, handler: {(action:UIAlertAction!) -> Void in
+                    // do nothing
+                })
+                alertController.addAction(doneAction)
+                self.presentViewController(alertController, animated: true, completion: nil)
             }
             self.refreshControl!.endRefreshing()
         }
@@ -91,7 +103,6 @@ class TodoListViewController: UITableViewController, NSFetchedResultsControllerD
         } else if segue.identifier == "showEdit" {
             let controller = (segue.destinationViewController as! UINavigationController).topViewController as! TodoEditViewController
             controller.doneTextClosure = ({(text: String) -> Void in
-                print("todos: \(text)")
                 let request = TodoSampleAPI.PostTodo(content: text)
                 TodoSampleAPI.sendRequest(request) { result in
                     switch result {
@@ -107,14 +118,21 @@ class TodoListViewController: UITableViewController, NSFetchedResultsControllerD
                             abort()
                         }
                     case .Failure(let error):
-                        print("error: \(error)")
+                        let errorMessage = "error: \(error)"
+                        print(errorMessage)
+                        let alertController = UIAlertController(title: nil, message: errorMessage, preferredStyle: UIAlertControllerStyle.Alert)
+                        let doneAction = UIAlertAction(title: "OK", style: UIAlertActionStyle.Cancel, handler: {(action:UIAlertAction!) -> Void in
+                            // do nothing
+                        })
+                        alertController.addAction(doneAction)
+                        self.presentViewController(alertController, animated: true, completion: nil)
                     }
                 }
             })
         }
     }
 
-    // MARK: - Table View
+    // MARK: - UITableViewControllerDelegate
 
     override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
         return self.fetchedResultsController.sections?.count ?? 0
@@ -136,24 +154,12 @@ class TodoListViewController: UITableViewController, NSFetchedResultsControllerD
         return true
     }
 
-    override func tableView(tableView: UITableView, commitEditingStyle editingStyle: UITableViewCellEditingStyle, forRowAtIndexPath indexPath: NSIndexPath) {
-        if editingStyle == .Delete {
-            let context = self.fetchedResultsController.managedObjectContext
-            context.deleteObject(self.fetchedResultsController.objectAtIndexPath(indexPath))
-            do {
-                try context.save()
-            } catch {
-                abort()
-            }
-        }
-    }
-
     func configureCell(cell: UITableViewCell, atIndexPath indexPath: NSIndexPath) {
         let object = self.fetchedResultsController.objectAtIndexPath(indexPath)
         cell.textLabel!.text = object.valueForKey("content")!.description
     }
 
-    // MARK: - Fetched results controller
+    // MARK: - NSFetchedResultsControllerDelegate
 
     var fetchedResultsController: NSFetchedResultsController {
         if _fetchedResultsController != nil {
@@ -162,7 +168,6 @@ class TodoListViewController: UITableViewController, NSFetchedResultsControllerD
         let fetchRequest = NSFetchRequest()
         let entity = NSEntityDescription.entityForName("Todo", inManagedObjectContext: self.managedObjectContext!)
         fetchRequest.entity = entity
-        fetchRequest.fetchBatchSize = 20
         let sortDescriptor = NSSortDescriptor(key: "id", ascending: true)
         fetchRequest.sortDescriptors = [sortDescriptor]
         let aFetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: self.managedObjectContext!, sectionNameKeyPath: nil, cacheName: "TodoList")
@@ -171,7 +176,7 @@ class TodoListViewController: UITableViewController, NSFetchedResultsControllerD
         do {
             try _fetchedResultsController!.performFetch()
         } catch {
-             abort()
+            abort()
         }
         return _fetchedResultsController!
     }

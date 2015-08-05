@@ -236,6 +236,7 @@
 				TargetAttributes = {
 					875A05B71B69853F0083B2B0 = {
 						CreatedOnToolsVersion = 7.0;
+						DevelopmentTeam = T8SGT3SP8E;
 					};
 					875A05D01B69853F0083B2B0 = {
 						CreatedOnToolsVersion = 7.0;
@@ -499,7 +500,11 @@
 			baseConfigurationReference = 7062D338675FE940B1147AF3 /* Pods-TTTodolistSample.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
+				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = TTTodolistSample/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.kongmings.TTTodolistSample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -511,7 +516,11 @@
 			baseConfigurationReference = 3E80B0940D262067A7264603 /* Pods-TTTodolistSample.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
+				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = TTTodolistSample/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.kongmings.TTTodolistSample;
 				PRODUCT_NAME = "$(TARGET_NAME)";

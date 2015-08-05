@@ -12,8 +12,8 @@ protocol TodoSampleRequest: Request {
 
 extension TodoSampleRequest {
     var baseURL: NSURL {
-        return NSURL(string: "http://localhost:9000")!
-        //return NSURL(string: "http://enigmatic-dusk-9369.herokuapp.com")!
+        //return NSURL(string: "http://localhost:9000/api/v1")!
+        return NSURL(string: "http://floating-falls-7245.herokuapp.com/api/v1")!
     }
 }
 
@@ -52,7 +52,7 @@ class TodoSampleAPI: API {
         }
         
         var path: String {
-            return "/todos"
+            return "/todo"
         }
         
         var parameters: [String: AnyObject] {
@@ -63,66 +63,6 @@ class TodoSampleAPI: API {
             guard let dictionary = object as? [String: AnyObject] else {
                 return nil
             }
-            
-            guard let todo = Todo(dictionary: dictionary) else {
-                return nil
-            }
-            
-            return todo
-        }
-    }
-
-    struct UpdateTodo: TodoSampleRequest {
-        typealias Response = Todo
-        
-        var id = 8
-        
-        var method: HTTPMethod {
-            return .PUT
-        }
-        
-        var path: String {
-            return "/todos/5"
-        }
-        
-        var parameters: [String: AnyObject] {
-            return ["id": 5, "content": "TEST 0002"]
-        }
-        
-        func responseFromObject(object: AnyObject, URLResponse: NSHTTPURLResponse) -> Response? {
-            guard let dictionary = object as? [String: AnyObject] else {
-                return nil
-            }
-            
-            guard let todo = Todo(dictionary: dictionary) else {
-                return nil
-            }
-            return todo
-        }
-    }
-    
-    struct DeleteTodo: TodoSampleRequest {
-        typealias Response = Todo
-        
-        var id = 8
-        
-        var method: HTTPMethod {
-            return .DELETE
-        }
-        
-        var path: String {
-            return "/todos/8"
-        }
-        
-        var parameters: [String: AnyObject] {
-            return ["id": 8, "content": "TEST 005"]
-        }
-        
-        func responseFromObject(object: AnyObject, URLResponse: NSHTTPURLResponse) -> Response? {
-            guard let dictionary = object as? [String: AnyObject] else {
-                return nil
-            }
-            
             guard let todo = Todo(dictionary: dictionary) else {
                 return nil
             }
@@ -139,11 +79,9 @@ struct Todo {
         guard let id = dictionary["id"] as? Int else {
             return nil
         }
-        
         guard let content = dictionary["content"] as? String else {
             return nil
         }
-        
         self.id = id
         self.content = content
     }
@@ -151,9 +89,17 @@ struct Todo {
 
 
 struct Todos<T> {
-    var todos: Array<T>
+    var todos: Array<Todo>
     
-    init(todos: Array<T>) {
-        self.todos = todos
+    init?(todos: Array<T>) {
+        var todolist: Array<Todo> = []
+        for todoDictionary in todos {
+            guard let dictionary = todoDictionary as? [String: AnyObject] else {
+                continue
+            }
+            let todo = Todo(dictionary: dictionary)
+            todolist.append(todo!)
+        }
+        self.todos = todolist
     }
 }
