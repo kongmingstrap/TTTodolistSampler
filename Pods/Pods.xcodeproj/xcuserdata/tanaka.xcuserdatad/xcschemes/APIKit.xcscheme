@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "4BC615DA8329BA5D7C25F02E"
+               BlueprintIdentifier = "F339A1DF55B43428B4A311D8"
                BuildableName = "APIKit.framework"
                BlueprintName = "APIKit"
                ReferencedContainer = "container:Pods.xcodeproj">

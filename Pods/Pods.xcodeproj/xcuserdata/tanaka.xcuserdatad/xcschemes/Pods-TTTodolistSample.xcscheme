@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "0077CBD389AA22C6B474EC5B"
+               BlueprintIdentifier = "0EFD1400DB891D3A2942ACB6"
                BuildableName = "Pods_TTTodolistSample.framework"
                BlueprintName = "Pods-TTTodolistSample"
                ReferencedContainer = "container:Pods.xcodeproj">
